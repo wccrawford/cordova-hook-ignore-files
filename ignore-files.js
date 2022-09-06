@@ -1,19 +1,27 @@
 #!/usr/bin/env node
+var q = require('q');
+var fs = require('fs');
+var glob = require('glob');
+var xml2js = require('xml2js');
+var del = require('del');
+// import {deleteAsync} from 'del';
+
 module.exports = function(context) {
-  var fs = require('fs'),
-  del = require('del');
-  path = require('path'),
-  Q = require('q'),
-  deferral = Q.defer(),
-  xml2js = require('xml2js'),
-  parser = new xml2js.Parser(),
-  glob = require("glob");
+  var deferral = q.defer();
+  var parser = new xml2js.Parser();
 
   function delFiles(ignoreFiles, config) {
-      var deferral = Q.defer(),
+      var deferral = q.defer(),
           fileDeferrals = [];
 
-      glob(ignoreFiles, {}, function (er, files) {
+      glob(ignoreFiles.$.ignore, {}, function (er, files) {
+          if (!files.length) {
+              console.log('ignore-files.js: Nothing to ignore with pattern `' + ignoreFiles.$.ignore + '`.');
+
+              return;
+          }
+          console.log('ignore-files.js: Ignoring with pattern `' + ignoreFiles.$.ignore + '`.');
+
           for (var i = 0, l = files.length; i < l; ++i) {
               fileDeferrals.push(del(files[i]));
               console.log('ignore-files.js: File `' + files[i] + '` ignored.');
@@ -23,18 +31,20 @@ module.exports = function(context) {
       })
 
       return deferral.promise.then(function() {
-          return Q.all(fileDeferrals);
+          return q.all(fileDeferrals);
       });
   }
 
   fs.readFile('config.xml', 'utf8', function (err, xml) {
     if (err) {
       deferral.reject('Unable to load config.xml');
+
       return;
     }
     parser.parseString(xml, function (err, config) {
       if (err) {
         deferral.reject('Unable to parse config.xml');
+
         return;
       }
       if (config.widget === undefined || config.widget['ignore-files'] === undefined) {
@@ -49,10 +59,10 @@ module.exports = function(context) {
         }
 
         globDeferrals.push(
-          delFiles(ignoreFiles[i].$.ignore, {})
+          delFiles(ignoreFiles[i], {})
         );
       }
-      Q.all(globDeferrals).done(function() {
+      q.all(globDeferrals).done(function() {
           deferral.resolve();
       });
     });
