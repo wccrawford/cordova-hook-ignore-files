@@ -23,15 +23,17 @@ module.exports = async function(context) {
 
                     for (var i = 0, l = files.length; i < l; ++i) {
                         fileDeferrals.push(
-                            fsProm.rm(files[i], {force:true, recursive: true}).catch((exc) => {console.log('Exception', exc)})
+                            fsProm.rm(files[i], {force: true, recursive: true}).catch((exc) => {
+                                console.log('Exception', exc)
+                            })
                         );
                         // console.log('ignore-files.js: File `' + files[i] + '` ignored.');
                     }
 
-                });
-
-                q.all(fileDeferrals).done(() => {
-                    resolve();
+                    q.all(fileDeferrals).done(() => {
+                        // console.log('ignore-files.js: Done delFiles');
+                        resolve();
+                    });
                 });
             });
         }
@@ -64,6 +66,7 @@ module.exports = async function(context) {
                     );
                 }
                 q.all(globDeferrals).done(function () {
+                    console.log('ignore-files.js: Done');
                     resolve();
                 });
             });
