@@ -17,6 +17,7 @@ module.exports = async function(context) {
                     if (!files.length) {
                         console.log('ignore-files.js: Nothing to ignore with pattern `' + ignoreFiles.$.ignore + '`.');
 
+                        resolve();
                         return;
                     }
                     console.log('ignore-files.js: Ignoring with pattern `' + ignoreFiles.$.ignore + '`.');
@@ -27,13 +28,15 @@ module.exports = async function(context) {
                                 console.log('Exception', exc)
                             })
                         );
-                        // console.log('ignore-files.js: File `' + files[i] + '` ignored.');
                     }
 
-                    q.all(fileDeferrals).done(() => {
-                        // console.log('ignore-files.js: Done delFiles');
-                        resolve();
-                    });
+                    q.all(fileDeferrals)
+                        .catch((exc) => {
+                            console.log('Exception', exc)
+                        })
+                        .done(() => {
+                            resolve();
+                        });
                 });
             });
         }
@@ -65,10 +68,14 @@ module.exports = async function(context) {
                         delFiles(ignoreFiles[i], {})
                     );
                 }
-                q.all(globDeferrals).done(function () {
-                    console.log('ignore-files.js: Done');
-                    resolve();
-                });
+                q.all(globDeferrals)
+                    .catch((exc) => {
+                        console.log('Exception', exc)
+                    })
+                    .done(function () {
+                        console.log('ignore-files.js: Done');
+                        resolve();
+                    });
             });
         });
     });
